@@ -3,14 +3,22 @@ from __future__ import annotations
 
 class Person:
     def __init__(self, name: str, age: float, max_kids: int) -> None:
-        self.name: str = name
-        self.age: float = age
-        self.max_kids: int = max_kids
+        self._name: str = name
+        self._age: float = age
+        self._max_kids: int = max_kids
         self._wants_partner: bool = False
         self._partnered: bool = False
         self._partner: Person
         self._time_alone: int = 0
         self._children: int = 0
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def age(self):
+        return self._age
 
     @property
     def wants_partner(self):
@@ -26,10 +34,10 @@ class Person:
 
     @property
     def want_kids(self):
-        return self._children < self.max_kids
+        return self._children < self._max_kids
 
     def increase_age(self, time: float):
-        self.age += time
+        self._age += time
 
     def set_wants_partner(self):
         if self._wants_partner:
