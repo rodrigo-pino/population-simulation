@@ -1,6 +1,6 @@
 from math import floor
 from classes import Female, Male, Person
-from typing import List, Callable
+from typing import List, Callable, Set
 from random import random, uniform, randint
 from events import Event, EventList
 
@@ -50,12 +50,45 @@ def event_wants_partner(population: List[Person], events: EventList) -> str:
     return log
 
 
-def event_partnerhip():
-    pass
+def event_partnerhip(population: List[Person], events: EventList) -> str:
+    log: str = ""
+    male_population: List[Person] = []
+    female_population: List[Person] = []
+    for person in population:
+        if person.wants_partner:
+            if person.has_partner:
+                raise Exception("The unthinkable has happened")
+            if person.is_female:
+                female_population.append(person)
+            else:
+                male_population.append(person)
+    taken_females: Set[int] = set()
+    for male in male_population:
+        for index, female in enumerate(female_population):
+            if index in taken_females:
+                continue
+            u = random()
+            diff = abs(male.age - female.age)
+            if (
+                (0 <= diff <= 5 and u < 0.45)
+                or (5 < diff <= 10 and u < 0.4)
+                or (10 < diff <= 15 and u < 0.35)
+                or (15 < diff <= 20 and u < 0.25)
+                or (20 < diff <= 100 and u < 0.15)
+            ):
+                male.set_partner(female)
+                female.set_partner(male)
+                log += f"{male} is in a relationships with {female}\n"
+                taken_females.add(index)
+                break
+
+    return log
 
 
-def event_breakup():
-    pass
+def event_breakup(population: List[Person], events: EventList) -> str:
+    log: str = ""
+
+    return log
 
 
 def event_pregnants():
