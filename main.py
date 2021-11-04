@@ -1,3 +1,4 @@
+from math import floor
 from classes import Female, Male, Person
 from typing import List, Callable
 from random import random, uniform, randint
@@ -87,3 +88,17 @@ def main(males: int, females: int):
     # Generate predefined inital Events
     initial_events: List[Event] = [Event(event_die, 12 * i, 5) for i in range(100)]
     initial_events += [Event(event_grow_old, i, 6) for i in range(100 * 12)]
+
+
+def run_simul(population: List[Person], events: EventList):
+    while events.can_continue:
+        curr_event = events.next()
+        log: str = curr_event.execute(population, events)
+        if log != "":
+            print(
+                f"Month: {events.current_time%12} Year: {floor(events.current_time/12)}",
+                log,
+                sep="\n",
+            )
+    print("Simulation Ended")
+    print(f"Remaining population {len(population)}")
