@@ -46,6 +46,7 @@ class EventList:
 
     def next(self) -> Event:
         next_event: Event = self._events.pop(0)
+        self._current_time = next_event.time
         return next_event
 
     @property
