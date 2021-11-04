@@ -50,7 +50,7 @@ class EventList:
 
     @property
     def current_time(self) -> int:
-        return self.current_time
+        return self._current_time
 
 
 # e1 = Event(0, 1)
