@@ -44,10 +44,16 @@ class EventList:
         self._events.add(event)
         return True
 
-    def next(self) -> Event:
-        next_event: Event = self._events.pop(0)
-        self._current_time = next_event.time
-        return next_event
+    def next(self) -> List[Event]:
+        event: Event = self._events.pop(0)
+        self._current_time = event.time
+        return self._next([event])
+
+    def _next(self, next_events: List[Event]) -> List[Event]:
+        if len(self._events) > 0 and self._current_time == self._events[0].time:
+            event: Event = self._events.pop(0)
+            return self._next(next_events + [event])
+        return next_events
 
     @property
     def can_continue(self) -> bool:
