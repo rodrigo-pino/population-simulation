@@ -16,8 +16,38 @@ def generate_break_up_time() -> int:
     return randint(4, 36)
 
 
-def event_wants_partner():
-    pass
+age_question: Callable[[Person, int, int], bool] = (
+    lambda p, x, y: True if x <= p.age < y else False
+)
+prob_question: Callable[[Person, float, float, float], bool] = (
+    lambda p, u0, u1, u2: True
+    if (p.is_male and u0 < u1) or (p.is_female and u0 < u2)
+    else False
+)
+
+
+def event_wants_partner(population: List[Person], events: EventList) -> str:
+    log: str = ""
+    filtered_population = [
+        person
+        for person in population
+        if not person.wants_partner
+        and not person.has_partner
+        and person.update_time_alone(events.current_time) == 0
+    ]
+    for person in filtered_population:
+        u = random()
+        if (
+            (age_question(person, 12, 15) and u < 0.6)
+            or (age_question(person, 15, 21) and u < 0.65)
+            or (age_question(person, 21, 35) and u < 0.8)
+            or (age_question(person, 35, 45) and u < 0.6)
+            or (age_question(person, 45, 60) and u < 0.5)
+            or (age_question(person, 60, 125) and u < 0.2)
+        ):
+            person.set_wants_partner()
+            log += f"{person} is interested in a relationships\n"
+    return log
 
 
 def event_partnerhip():
@@ -32,7 +62,7 @@ def event_pregnants():
     pass
 
 
-def event_labourd():
+def event_labour():
     pass
 
 
@@ -44,14 +74,7 @@ def event_grow_old(population: List[Person], events: EventList) -> str:
 
 def event_die(population: List[Person], events: EventList) -> str:
     log: str = ""
-    age_question: Callable[[Person, int, int], bool] = (
-        lambda p, x, y: True if x <= p.age < y else False
-    )
-    prob_question: Callable[[Person, float, float, float], bool] = (
-        lambda p, u0, u1, u2: True
-        if (p.is_male and u0 < u1) or (p.is_female and u0 < u2)
-        else False
-    )
+
     remove_indexes: List[int] = []
     for index, person in enumerate(population):
         u = random()
@@ -92,8 +115,9 @@ def main(males: int, females: int):
 
 def run_simul(population: List[Person], events: EventList):
     while events.can_continue:
-        curr_event = events.next()
-        log: str = curr_event.execute(population, events)
+        log: str = "".join(
+            curr_event.execute(population, events) for curr_event in events.next()
+        )
         if log != "":
             print(
                 f"Month: {events.current_time%12} Year: {floor(events.current_time/12)}",
