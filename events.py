@@ -7,7 +7,7 @@ from classes import Person
 class Event:
     def __init__(
         self,
-        action: Callable[[List[Person], EventList], None],
+        action: Callable[[List[Person], EventList], str],
         time: int,
         priority: int = 0,
     ) -> None:

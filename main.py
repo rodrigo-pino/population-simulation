@@ -1,6 +1,7 @@
 from classes import Female, Male, Person
 from typing import List, Callable
 from random import random, uniform, randint
+from events import Event, EventList
 
 from events import EventList
 
@@ -34,11 +35,14 @@ def event_labourd():
     pass
 
 
-def event_increase_age(population: List[Person]):
-    pass
+def event_grow_old(population: List[Person], events: EventList) -> str:
+    for person in population:
+        person.increase_age(1 / 12)
+    return ""
 
 
-def event_die(population: List[Person], events: EventList):
+def event_die(population: List[Person], events: EventList) -> str:
+    log: str = ""
     age_question: Callable[[Person, int, int], bool] = (
         lambda p, x, y: True if x <= p.age < y else False
     )
@@ -61,8 +65,10 @@ def event_die(population: List[Person], events: EventList):
     remove_indexes.reverse()
     for index in remove_indexes:
         person = population.pop(index)
+        log += f"{person.name} of age {person.age} passed away\n"
         if person.has_partner:
             person.get_partner.break_up(generate_break_up_time())
+    return log
 
 
 def generate_popultaion(males: int, females: int):
@@ -76,4 +82,8 @@ def generate_popultaion(males: int, females: int):
 
 
 def main(males: int, females: int):
+    # Generate new population
     population: List[Person] = generate_popultaion(males, females)
+    # Generate predefined inital Events
+    initial_events: List[Event] = [Event(event_die, 12 * i, 5) for i in range(100)]
+    initial_events += [Event(event_grow_old, i, 6) for i in range(100 * 12)]
