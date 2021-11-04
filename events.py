@@ -50,8 +50,16 @@ class EventList:
         return next_event
 
     @property
+    def can_continue(self) -> bool:
+        return self._current_time <= self._final_time or len(self._events) > 0
+
+    @property
     def current_time(self) -> int:
         return self._current_time
+
+    @property
+    def final_time(self) -> int:
+        return self._final_time
 
 
 # e1 = Event(0, 1)
