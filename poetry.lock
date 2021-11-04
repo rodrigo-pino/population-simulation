@@ -1,0 +1,17 @@
+[[package]]
+name = "llist"
+version = "0.8"
+description = "Linked list data structures for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.9"
+content-hash = "f0ce093e3a1e8d7a26e774039cba07b879a88b10aa845f771796d028ddc842bc"
+
+[metadata.files]
+llist = [
+    {file = "llist-0.8.tar.gz", hash = "sha256:0771dfacf557cc0234273c5b045f35eb7990cd100a356eef3aa3a7e97a621f2a"},
+]
