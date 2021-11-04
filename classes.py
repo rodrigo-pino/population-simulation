@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Person:
     def __init__(self, name: str, age: int, max_kids: int) -> None:
         self.name: str = name
@@ -34,7 +37,7 @@ class Person:
             raise Exception(f"{self.name} is recovering from past relationships.")
         self._wants_partner = True
 
-    def set_partner(self, partner):
+    def set_partner(self, partner: Person):
         if self._partnered:
             raise Exception(
                 f"{self.name} is already partnered with {self._partner.name}"
@@ -49,18 +52,18 @@ class Person:
     def break_up(self, time: int) -> None:
         if not self._partnered:
             raise Exception(f"{self.name} cannot break up without a partner")
-        self.update_time_alone = time
+        self._time_alone = time
 
     def update_time_alone(self, time: int) -> int:
         self._time_alone = max(self._time_alone - time, 0)
         return self._time_alone
 
     @property
-    def is_female(self):
+    def is_female(self) -> bool:
         raise NotImplementedError()
 
     @property
-    def is_male(self):
+    def is_male(self) -> bool:
         raise NotImplementedError()
 
 
