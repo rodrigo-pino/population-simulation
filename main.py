@@ -66,7 +66,7 @@ def event_die(population: List[Person], events: EventList) -> str:
     remove_indexes.reverse()
     for index in remove_indexes:
         person = population.pop(index)
-        log += f"{person.name} of age {person.age} passed away\n"
+        log += f"{person}: passed away\n"
         if person.has_partner:
             person.get_partner.break_up(generate_break_up_time())
     return log

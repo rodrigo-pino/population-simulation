@@ -51,7 +51,7 @@ class EventList:
 
     @property
     def can_continue(self) -> bool:
-        return self._current_time <= self._final_time or len(self._events) > 0
+        return self._current_time <= self._final_time and len(self._events) > 0
 
     @property
     def current_time(self) -> int:

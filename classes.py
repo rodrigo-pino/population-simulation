@@ -77,6 +77,12 @@ class Person:
     def is_male(self) -> bool:
         raise NotImplementedError()
 
+    def __str__(self) -> str:
+        return f"{self.name}, age {int(self.age)}, {'married' if self._partnered else 'single'}, children {self._children}"
+
+    def __repr__(self) -> str:
+        return str(self)
+
 
 class Female(Person):
     def __init__(self, name: str, age: float, max_kids: int) -> None:
