@@ -1,11 +1,23 @@
+from __future__ import annotations
 from typing import Callable, List, Tuple
 from sortedcontainers import SortedSet
+from classes import Person
 
 
 class Event:
-    def __init__(self, time: int, priority: int = 0) -> None:
+    def __init__(
+        self,
+        action: Callable[[List[Person], EventList], None],
+        time: int,
+        priority: int = 0,
+    ) -> None:
+        self._action = action
         self._time = time
         self._priority = priority
+
+    @property
+    def execute(self):
+        return self._action
 
     @property
     def time(self) -> int:
