@@ -1,10 +1,17 @@
 from classes import Female, Male, Person
-from typing import List
-from random import random, uniform
+from typing import List, Callable
+from random import random, uniform, randint
+
+from events import EventList
 
 
 def generate_max_kids():
     pass
+
+
+# Needs to generate a Exponential Var
+def generate_break_up_time() -> int:
+    return randint(4, 36)
 
 
 def event_wants_partner():
@@ -27,8 +34,35 @@ def event_labourd():
     pass
 
 
-def event_die():
+def event_increase_age(population: List[Person]):
     pass
+
+
+def event_die(population: List[Person], events: EventList):
+    age_question: Callable[[Person, int, int], bool] = (
+        lambda p, x, y: True if x <= p.age < y else False
+    )
+    prob_question: Callable[[Person, float, float, float], bool] = (
+        lambda p, u0, u1, u2: True
+        if (p.is_male and u0 < u1) or (p.is_female and u0 < u2)
+        else False
+    )
+    remove_indexes: List[int] = []
+    for index, person in enumerate(population):
+        u = random()
+        if (
+            (age_question(person, 0, 12) and u < 0.25)
+            or (age_question(person, 12, 45) and prob_question(person, u, 0.1, 0.15))
+            or (age_question(person, 45, 78) and prob_question(person, u, 0.3, 0.35))
+            or (age_question(person, 76, 125) and prob_question(person, u, 0.7, 0.65))
+        ):
+            remove_indexes.append(index)
+
+    remove_indexes.reverse()
+    for index in remove_indexes:
+        person = population.pop(index)
+        if person.has_partner:
+            person.get_partner.break_up(generate_break_up_time())
 
 
 def generate_popultaion(males: int, females: int):
