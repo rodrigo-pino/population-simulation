@@ -57,12 +57,14 @@ class Person:
             raise Exception(f"{self.name} is not looking for a partner")
         if (self.is_female and partner.is_female) or (self.is_male and partner.is_male):
             raise Exception(f"Simulation does not aloud same sex relationships")
+        self._wants_partner = False
         self._partnered = True
         self._partner: Person = partner
 
     def break_up(self, time: int) -> None:
         if not self._partnered:
             raise Exception(f"{self.name} cannot break up without a partner")
+        self._partnered = False
         self._time_alone = time
 
     def update_time_alone(self, time: int) -> int:
