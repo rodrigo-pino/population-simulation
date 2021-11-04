@@ -2,9 +2,9 @@ from __future__ import annotations
 
 
 class Person:
-    def __init__(self, name: str, age: int, max_kids: int) -> None:
+    def __init__(self, name: str, age: float, max_kids: int) -> None:
         self.name: str = name
-        self.age: int = age
+        self.age: float = age
         self.max_kids: int = max_kids
         self._wants_partner: bool = False
         self._partnered: bool = False
@@ -68,9 +68,11 @@ class Person:
 
 
 class Female(Person):
-    def __init__(self, name: str, age: int, max_kids: int) -> None:
+    def __init__(self, name: str, age: float, max_kids: int) -> None:
         super().__init__(name, age, max_kids)
         self._pregnant_kids = 0
+        self._partner: Male
+        self._kids_parent: Male
 
     @property
     def is_pregnant(self):
@@ -83,10 +85,15 @@ class Female(Person):
             raise Exception(f"{self.name} is already pregnant")
         if not self.want_kids:
             raise Exception(f"{self.name} want's no more kids")
+
         self._pregnant_kids = kids_count
+        self._kids_paren = self._partner
 
     def labour(self) -> int:
         new_little_people = self._pregnant_kids
+        self._children += new_little_people
+        self._kids_parent._children += new_little_people
+
         self._pregnant_kids = 0
         return new_little_people
 
@@ -100,8 +107,9 @@ class Female(Person):
 
 
 class Male(Person):
-    def __init__(self, name: str, age: int, max_kids: int) -> None:
+    def __init__(self, name: str, age: float, max_kids: int) -> None:
         super().__init__(name, age, max_kids)
+        self._partner: Female
 
     @property
     def is_female(self):
