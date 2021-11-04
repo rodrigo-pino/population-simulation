@@ -28,6 +28,9 @@ class Person:
     def want_kids(self):
         return self._children < self.max_kids
 
+    def increase_age(self, time: float):
+        self.age += time
+
     def set_wants_partner(self):
         if self._wants_partner:
             raise Exception(f"{self.name} already wants a partner.")
