@@ -17,16 +17,20 @@ class Event:
 
 
 class EventList:
-    def __init__(self, initial_events: List[Event]) -> None:
+    def __init__(self, initial_events: List[Event], final_time: int) -> None:
         sort_events: Callable[[Event], Tuple[int, int]] = lambda x: (
             x.time,
             x.priority,
         )
         self._events: SortedSet = SortedSet(initial_events, key=sort_events)
         self._current_time = 0
+        self._final_time = final_time
 
-    def add(self, event: Event) -> None:
+    def add(self, event: Event) -> bool:
+        if event.time > self._final_time:
+            return False
         self._events.add(event)
+        return True
 
     def next(self) -> Event:
         next_event: Event = self._events.pop(0)
