@@ -87,6 +87,18 @@ def event_partnerhip(population: List[Person], events: EventList) -> str:
 
 def event_breakup(population: List[Person], events: EventList) -> str:
     log: str = ""
+    partnered_male_population = [
+        person 
+        for person in population 
+        if person.is_male and person.has_partner
+    ]
+    for male in partnered_male_population:
+        u = random()
+        if u < 0.2:
+            female = male.get_partner
+            female.break_up(generate_break_up_time())
+            male.break_up(generate_break_up_time())
+            log += f"{female} and {male} broke up\n"
 
     return log
 
