@@ -7,8 +7,12 @@ from events import Event, EventList
 from events import EventList
 
 
-def generate_max_kids():
-    pass
+def generate_max_kids() -> int:
+    return 2
+
+
+def generate_baby_amount() -> int:
+    return 1
 
 
 # Needs to generate a Exponential Var
@@ -88,9 +92,7 @@ def event_partnerhip(population: List[Person], events: EventList) -> str:
 def event_breakup(population: List[Person], events: EventList) -> str:
     log: str = ""
     partnered_male_population = [
-        person 
-        for person in population 
-        if person.is_male and person.has_partner
+        person for person in population if person.is_male and person.has_partner
     ]
     for male in partnered_male_population:
         u = random()
@@ -103,12 +105,43 @@ def event_breakup(population: List[Person], events: EventList) -> str:
     return log
 
 
-def event_pregnants():
-    pass
+def event_pregnants(population: List[Person], events: EventList) -> str:
+    log: str = ""
+    partnered_female_population = [
+        person
+        for person in population
+        if isinstance(person, Female) and person.has_partner
+    ]
+    someone_got_pregnant = False
+    for female in partnered_female_population:
+        u = random()
+
+        if (
+            (age_question(female, 12, 15) and u < 0.2)
+            or (age_question(female, 15, 21) and u < 0.45)
+            or (age_question(female, 21, 35) and u < 0.8)
+            or (age_question(female, 35, 45) and u < 0.4)
+            or (age_question(female, 45, 60) and u < 0.2)
+            or (age_question(female, 60, 125) and u < 0.05)
+        ):
+            someone_got_pregnant = True
+            female.set_pregnant(generate_baby_amount())
+    if someone_got_pregnant:
+        events.add(Event(event_labour, events.current_time + 9, 0))
+    return log
 
 
-def event_labour():
-    pass
+def event_labour(population: List[Person], events: EventList) -> str:
+    log: str = ""
+    pregnant_population = [
+        person
+        for person in population
+        if isinstance(person, Female) and person.is_pregnant
+    ]
+    total_new_kids = 0
+    new_little_people: List[Person] = []
+    for female in pregnant_population:
+        total_new_kids += female.labour()
 
 
 def event_grow_old(population: List[Person], events: EventList) -> str:
@@ -143,9 +176,13 @@ def event_die(population: List[Person], events: EventList) -> str:
 def generate_popultaion(males: int, females: int):
     population: List[Person] = list()
     for _ in range(males):
-        population.append(Male(name="Male", age=uniform(0, 100), max_kids=2))
+        population.append(
+            Male(name="Male", age=uniform(0, 100), max_kids=generate_max_kids())
+        )
     for _ in range(females):
-        population.append(Female(name="Female", age=uniform(0, 100), max_kids=2))
+        population.append(
+            Female(name="Female", age=uniform(0, 100), max_kids=generate_max_kids())
+        )
 
     return population
 
