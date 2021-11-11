@@ -8,26 +8,27 @@ from events import EventList
 
 
 def generate_max_kids() -> int:
-    return 2
+    return 10
 
 
 def generate_baby_amount() -> int:
-    return 1
+    u = random()
+    if u < 0.7:
+        return 1
+    if u < 0.7 + 0.18:
+        return 2
+    if u < 0.7 + 0.18 + 0.06:
+        return 3
+    if u < 0.7 + 0.18 + 0.10:
+        return 4
+    return 5
 
 
-# Needs to generate a Exponential Var
-def generate_break_up_time() -> int:
-    return randint(4, 36)
-
-
-age_question: Callable[[Person, int, int], bool] = (
-    lambda p, x, y: True if x <= p.age < y else False
-)
-prob_question: Callable[[Person, float, float, float], bool] = (
-    lambda p, u0, u1, u2: True
-    if (p.is_male and u0 < u1) or (p.is_female and u0 < u2)
-    else False
-)
+def generate_break_up_time(age: float) -> int:
+    # u = random()
+    # exponential dist
+    # pram
+    return 3
 
 
 def event_wants_partner(population: List[Person], events: EventList) -> str:
@@ -37,17 +38,19 @@ def event_wants_partner(population: List[Person], events: EventList) -> str:
         for person in population
         if not person.wants_partner
         and not person.has_partner
+        and person.age >= 12
         and person.update_time_alone(events.current_time) == 0
     ]
     for person in filtered_population:
         u = random()
+        age = person.age
         if (
-            (age_question(person, 12, 15) and u < 0.6)
-            or (age_question(person, 15, 21) and u < 0.65)
-            or (age_question(person, 21, 35) and u < 0.8)
-            or (age_question(person, 35, 45) and u < 0.6)
-            or (age_question(person, 45, 60) and u < 0.5)
-            or (age_question(person, 60, 125) and u < 0.2)
+            (12 < age < 15 and u < 0.6)
+            or (15 < age < 21 and u < 0.65)
+            or (21 < age < 35 and u < 0.8)
+            or (35 < age < 45 and u < 0.6)
+            or (45 < age < 60 and u < 0.5)
+            or (60 < age < 125 and u < 0.2)
         ):
             person.set_wants_partner()
             log += f"{person} is interested in a relationships\n"
@@ -98,8 +101,8 @@ def event_breakup(population: List[Person], events: EventList) -> str:
         u = random()
         if u < 0.2:
             female = male.get_partner
-            female.break_up(generate_break_up_time())
-            male.break_up(generate_break_up_time())
+            female.break_up(generate_break_up_time(female.age))
+            male.break_up(generate_break_up_time(female.age))
             log += f"{female} and {male} broke up\n"
 
     return log
@@ -110,22 +113,27 @@ def event_pregnants(population: List[Person], events: EventList) -> str:
     partnered_female_population = [
         person
         for person in population
-        if isinstance(person, Female) and person.has_partner
+        if isinstance(person, Female)
+        and person.has_partner
+        and not person.is_pregnant
+        and person.want_kids
+        and person.get_partner.want_kids
     ]
     someone_got_pregnant = False
     for female in partnered_female_population:
         u = random()
-
+        age = female.age
         if (
-            (age_question(female, 12, 15) and u < 0.2)
-            or (age_question(female, 15, 21) and u < 0.45)
-            or (age_question(female, 21, 35) and u < 0.8)
-            or (age_question(female, 35, 45) and u < 0.4)
-            or (age_question(female, 45, 60) and u < 0.2)
-            or (age_question(female, 60, 125) and u < 0.05)
+            (12 < age < 15 and u < 0.2)
+            or (15 < age < 21 and u < 0.45)
+            or (21 < age < 35 and u < 0.8)
+            or (35 < age < 45 and u < 0.4)
+            or (45 < age < 60 and u < 0.2)
+            or (60 < age < 125 and u < 0.05)
         ):
             someone_got_pregnant = True
             female.set_pregnant(generate_baby_amount())
+            log += f"{female} got pregnant\n"
     if someone_got_pregnant:
         events.add(Event(event_labour, events.current_time + 9, 0))
     return log
@@ -138,10 +146,25 @@ def event_labour(population: List[Person], events: EventList) -> str:
         for person in population
         if isinstance(person, Female) and person.is_pregnant
     ]
+    if len(pregnant_population) == 0:
+        return ""
     total_new_kids = 0
-    new_little_people: List[Person] = []
     for female in pregnant_population:
         total_new_kids += female.labour()
+        log += f"{female} went into labour\n"
+
+    log += f"{total_new_kids} were borned (Population increase to {len(population) + total_new_kids})\n"
+    new_little_people: List[Person] = []
+    for _ in range(total_new_kids):
+        u = random()
+        if u < 0.5:
+            new_little_people.append(Male("Boy", 0, generate_max_kids()))
+        else:
+            new_little_people.append(Female("Girl", 0, generate_max_kids()))
+
+    for kid in new_little_people:
+        population.append(kid)
+    return log
 
 
 def event_grow_old(population: List[Person], events: EventList) -> str:
@@ -153,14 +176,21 @@ def event_grow_old(population: List[Person], events: EventList) -> str:
 def event_die(population: List[Person], events: EventList) -> str:
     log: str = ""
 
+    prob_question: Callable[[Person, float, float, float], bool] = (
+        lambda p, u0, u1, u2: True
+        if (p.is_male and u0 < u1) or (p.is_female and u0 < u2)
+        else False
+    )
+
     remove_indexes: List[int] = []
     for index, person in enumerate(population):
         u = random()
+        age = person.age
         if (
-            (age_question(person, 0, 12) and u < 0.25)
-            or (age_question(person, 12, 45) and prob_question(person, u, 0.1, 0.15))
-            or (age_question(person, 45, 78) and prob_question(person, u, 0.3, 0.35))
-            or (age_question(person, 76, 125) and prob_question(person, u, 0.7, 0.65))
+            (0 < age < 12 and u < 0.25)
+            or (12 < age < 45 and prob_question(person, u, 0.1, 0.15))
+            or (45 < age < 76 and prob_question(person, u, 0.3, 0.35))
+            or (76 < age < 125 and prob_question(person, u, 0.7, 0.65))
         ):
             remove_indexes.append(index)
 
@@ -169,7 +199,8 @@ def event_die(population: List[Person], events: EventList) -> str:
         person = population.pop(index)
         log += f"{person}: passed away\n"
         if person.has_partner:
-            person.get_partner.break_up(generate_break_up_time())
+            partner = person.get_partner
+            partner.break_up(generate_break_up_time(partner.age))
     return log
 
 
@@ -189,7 +220,7 @@ def generate_popultaion(males: int, females: int):
 
 def main(males: int, females: int):
     # Generate new population
-    population: List[Person] = generate_popultaion(males, females)
+    # population: List[Person] = generate_popultaion(males, females)
     # Generate predefined inital Events
     initial_events: List[Event] = [Event(event_die, 12 * i, 5) for i in range(100)]
     initial_events += [Event(event_grow_old, i, 6) for i in range(100 * 12)]
@@ -197,12 +228,13 @@ def main(males: int, females: int):
 
 def run_simul(population: List[Person], events: EventList):
     while events.can_continue:
-        log: str = "".join(
-            curr_event.execute(population, events) for curr_event in events.next()
-        )
+        log: str = ""
+        for curr_event in events.next():
+            log += curr_event.execute(population, events)
         if log != "":
             print(
-                f"Month: {events.current_time%12} Year: {floor(events.current_time/12)}",
+                f"Month: {events.current_time%12} Year: {floor(events.current_time/12)} "
+                f"Current Pop: {len(population)}",
                 log,
                 sep="\n",
             )
