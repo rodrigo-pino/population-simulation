@@ -1,7 +1,7 @@
 from math import floor
 from classes import Female, Male, Person
 from typing import List, Callable, Set
-from random import random, uniform, randint
+from random import random, uniform
 from events import Event, EventList
 
 from events import EventList
