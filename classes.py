@@ -106,7 +106,7 @@ class Female(Person):
             raise Exception(f"{self.name} want's no more kids")
 
         self._pregnant_kids = kids_count
-        self._kids_paren = self._partner
+        self._kids_parent = self._partner
 
     def labour(self) -> int:
         new_little_people = self._pregnant_kids
