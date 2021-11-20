@@ -1,23 +1,19 @@
 from __future__ import annotations
-from typing import Callable, List, Tuple
+from typing import Any, Callable, List, Set, Tuple
 from sortedcontainers import SortedSet
-from classes import Person
 
 
 class Event:
     def __init__(
-        self,
-        action: Callable[[List[Person], EventList], str],
-        time: int,
-        priority: int = 0,
+        self, action: Callable[..., str], time: int, priority: int = 0, *args: Any
     ) -> None:
         self._action = action
         self._time = time
         self._priority = priority
+        self._args = args
 
-    @property
     def execute(self):
-        return self._action
+        return self._action(*self._args)
 
     @property
     def time(self) -> int:
@@ -27,9 +23,13 @@ class Event:
     def priority(self) -> int:
         return self._priority
 
+    @property
+    def unpack_action(self):
+        return (self._action, self._args)
 
-class EventList:
-    def __init__(self, initial_events: List[Event], final_time: int) -> None:
+
+class EventsHandler:
+    def __init__(self, final_time: int, initial_events: List[Event] = list()) -> None:
         sort_events: Callable[[Event], Tuple[int, int]] = lambda x: (
             x.time,
             x.priority,
@@ -39,9 +39,13 @@ class EventList:
         self._final_time = final_time
 
     def add(self, event: Event) -> bool:
+        if event.time < self.current_time:
+            raise Exception(f"Cannot send events to the past")
         if event.time > self._final_time:
             return False
         self._events.add(event)
+
+        self.assert_only_one_event()
         return True
 
     def next(self) -> List[Event]:
@@ -54,6 +58,15 @@ class EventList:
             event: Event = self._events.pop(0)
             return self._next(next_events + [event])
         return next_events
+
+    def assert_only_one_event(self):
+        temporal = set()
+        for event in self._events:
+            (action, (_, _, idx, *_)) = event.unpack_action
+            if (action, idx) in temporal:
+                pass
+                # raise Exception(f"{idx} appears twice with {action}")
+            temporal.add((action, idx))
 
     @property
     def can_continue(self) -> bool:
