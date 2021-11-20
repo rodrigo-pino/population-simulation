@@ -21,7 +21,6 @@ def valid_event(event: Callable[..., str]) -> Callable[..., str]:
             return event(*args)
         except KeyError:
             return ""
-
     return inner
 
 
@@ -35,8 +34,9 @@ def int_uniform(a: float, b: float) -> int:
 
 
 def exponential(param: float) -> float:
+    return 1
     u = random()
-    return - log(u)/param
+    return -log(u) / param
 
 
 def next_age_group(p: Person) -> int:
@@ -244,6 +244,20 @@ def wants_partner_event(population: Dict[str, Person], events: EventsHandler, id
     person.update_time_alone(events.current_time)
     age = person.age / 12
     u = random()
+    
+    if person.wants_partner:
+        events.add(
+            Event(
+                wants_partner_event,
+                events.current_time + int_uniform(*WANT_PARTNER_RANGE),
+                3,
+                population,
+                events,
+                idx
+                )
+            )
+        return f"{person} is still looking for a relationship"
+
     if (
         (12 <= age < 15 and u < 0.6)
         or (15 <= age < 21 and u < 0.65)
@@ -264,7 +278,6 @@ def wants_partner_event(population: Dict[str, Person], events: EventsHandler, id
             )
         )
         return f"{person} is looking for a relationship"
-
     return ""
 
 
@@ -299,6 +312,16 @@ def partner_event(population: Dict[str, Person], events: EventsHandler, idx: str
                     get_pregnant_event,
                     events.current_time + int_uniform(*PREGNANT_RANGE),
                     3,
+                    population,
+                    events,
+                    female.id,
+                )
+            )
+            events.add(
+                Event(
+                    break_up_event,
+                    events.current_time + int_uniform(*BREAK_UP_RANGE),
+                    2,
                     population,
                     events,
                     female.id,
@@ -419,6 +442,8 @@ def labour_event(population: Dict[bytes, Person], events: EventsHandler, idx: by
 @valid_event
 def break_up_event(population: Dict[str, Person], events: EventsHandler, idx: str):
     person = population[idx]
+    if not person.has_partner:
+        return ""
     u = random()
     if u < 0.2:
         partner = person.get_partner
@@ -448,6 +473,18 @@ def break_up_event(population: Dict[str, Person], events: EventsHandler, idx: st
             )
         )
         return f"{person} and {partner} broke up"
+    else:
+        events.add(
+            Event(
+                break_up_event,
+                events.current_time + int_uniform(*BREAK_UP_RANGE),
+                2,
+                population,
+                events,
+                idx,
+            )
+        )
+
     return ""
 
 
