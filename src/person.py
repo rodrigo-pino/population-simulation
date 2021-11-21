@@ -72,7 +72,6 @@ class Person:
     def break_up(self, time: int) -> None:
         if not self._partnered:
             raise Exception(f"{self.name} cannot break up without a partner")
-        self._wants_partner = False
         self._partnered = False
         self._time_alone = time
 
