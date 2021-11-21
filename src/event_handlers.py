@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, List, Set, Tuple
+from typing import Any, Callable, List, Tuple
 from sortedcontainers import SortedSet
 
 
@@ -45,7 +45,6 @@ class EventsHandler:
             return False
         self._events.add(event)
 
-        self.assert_only_one_event()
         return True
 
     def next(self) -> List[Event]:
@@ -58,15 +57,6 @@ class EventsHandler:
             event: Event = self._events.pop(0)
             return self._next(next_events + [event])
         return next_events
-
-    def assert_only_one_event(self):
-        temporal = set()
-        for event in self._events:
-            (action, (_, _, idx, *_)) = event.unpack_action
-            if (action, idx) in temporal:
-                pass
-                # raise Exception(f"{idx} appears twice with {action}")
-            temporal.add((action, idx))
 
     @property
     def can_continue(self) -> bool:

@@ -34,7 +34,6 @@ def int_uniform(a: float, b: float) -> int:
 
 
 def exponential(param: float) -> float:
-    return 1
     u = random()
     return -log(u) / param
 
@@ -62,17 +61,17 @@ def generate_max_kids() -> int:
 
 
 def generate_time_alone(p: Person) -> int:
-    age = p.age
+    age = p.age/12
     if 12 <= age < 15:
-        return round(exponential(1 / 3) * 3)
+        return round(exponential(1 / 3))
     if 15 <= age < 35:
-        return round(exponential(1 / 6) * 6)
+        return round(exponential(1 / 6))
     if 35 <= age < 45:
-        return round(exponential(1 / 12) * 12)
+        return round(exponential(1 / 12))
     if 45 <= age < 60:
-        return round(exponential(1 / 24) * 24)
+        return round(exponential(1 / 24))
     if 60 <= age < 125:
-        return round(exponential(1 / 48) * 48)
+        return round(exponential(1 / 48))
     return SIMULATION_END
 
 
@@ -136,7 +135,7 @@ def generate_initial_popultaion(m: int, f: int, events: EventsHandler):
                 Event(
                     die_event,
                     events.current_time + ultimate_demise,
-                    5,
+                    0,
                     population,
                     events,
                     p.id,
@@ -173,11 +172,10 @@ def die_event(
         partner = person.get_partner
         partner_time_alone: int = events.current_time + generate_time_alone(partner)
         partner.break_up(partner_time_alone)
-
         events.add(
             Event(
                 wants_partner_event,
-                partner_time_alone,
+                partner_time_alone + int_uniform(*WANT_PARTNER_RANGE),
                 5,
                 population,
                 events,
@@ -214,7 +212,7 @@ def grow_old_event(
             Event(
                 die_event,
                 death_time,
-                5,
+                0,
                 population,
                 events,
                 idx,
@@ -241,23 +239,16 @@ def grow_old_event(
 @valid_event
 def wants_partner_event(population: Dict[str, Person], events: EventsHandler, idx: str):
     person = population[idx]
+
+    if person.has_partner:
+        return ""
+    
+    if person.wants_partner:
+        raise Exception(f"{person} cannot want a partner again. Internal Error.")
+
     person.update_time_alone(events.current_time)
     age = person.age / 12
     u = random()
-    
-    if person.wants_partner:
-        events.add(
-            Event(
-                wants_partner_event,
-                events.current_time + int_uniform(*WANT_PARTNER_RANGE),
-                3,
-                population,
-                events,
-                idx
-                )
-            )
-        return f"{person} is still looking for a relationship"
-
     if (
         (12 <= age < 15 and u < 0.6)
         or (15 <= age < 21 and u < 0.65)
@@ -278,13 +269,28 @@ def wants_partner_event(population: Dict[str, Person], events: EventsHandler, id
             )
         )
         return f"{person} is looking for a relationship"
+
+    events.add(
+        Event(
+            wants_partner_event,
+            events.current_time + int_uniform(*WANT_PARTNER_RANGE),
+            3,
+            population,
+            events,
+            idx
+            )
+        )
     return ""
 
 
 @valid_event
-def partner_event(population: Dict[str, Person], events: EventsHandler, idx: str):
+def partner_event(population: Dict[bytes, Person], events: EventsHandler, idx: bytes):
     person = population[idx]
-    if person.has_partner or person.update_time_alone(events.current_time) != 0:
+    if person.has_partner or not person.wants_partner:
+        return ""
+    # a person is selected by another partner events, and then dies
+    # this person has an alone time needed to complete
+    if person.update_time_alone(events.current_time) != 0:
         return ""
 
     for k in population:
@@ -307,6 +313,7 @@ def partner_event(population: Dict[str, Person], events: EventsHandler, idx: str
             person.set_partner(partner)
             partner.set_partner(person)
             female = person if person.is_female else partner
+            male = person if person.is_male else partner
             events.add(
                 Event(
                     get_pregnant_event,
@@ -315,6 +322,7 @@ def partner_event(population: Dict[str, Person], events: EventsHandler, idx: str
                     population,
                     events,
                     female.id,
+                    male.id
                 )
             )
             events.add(
@@ -343,12 +351,29 @@ def partner_event(population: Dict[str, Person], events: EventsHandler, idx: str
 
 
 @valid_event
-def get_pregnant_event(population: Dict[str, Person], events: EventsHandler, idx: str):
-    female = population[idx]
+def get_pregnant_event(
+        population: Dict[bytes, Person],
+        events: EventsHandler,
+        female_idx: bytes,
+        male_idx: bytes
+    ):
+    female = population[female_idx]
+    male = female.get_partner
+
     if not isinstance(female, Female):
         raise Exception("Cannot get a male pregnant")
-    if not female.want_kids or not female.has_partner:
+    
+    # Female is already pregnant by a previous male
+    if female.is_pregnant and male.id == male_idx:
         return ""
+    
+    # A female cannot get pregnat with a male she is not
+    # currently with
+    if female.has_partner and male.id != male_idx:
+        return ""
+    if not female.want_kids or not male.want_kids or not female.has_partner:
+        return ""
+
 
     u = random()
     age = female.age / 12
@@ -362,7 +387,7 @@ def get_pregnant_event(population: Dict[str, Person], events: EventsHandler, idx
     ):
         female.set_pregnant(generate_baby_amount())
         events.add(
-            Event(labour_event, events.current_time + 9, 0, population, events, idx)
+            Event(labour_event, events.current_time + 9, 0, population, events, female_idx, male_idx)
         )
         return f"{female} got pregnant"
 
@@ -373,15 +398,16 @@ def get_pregnant_event(population: Dict[str, Person], events: EventsHandler, idx
             5,
             population,
             events,
-            female.id,
+            female_idx,
+            male_idx
         )
     )
     return ""
 
 
 @valid_event
-def labour_event(population: Dict[bytes, Person], events: EventsHandler, idx: bytes):
-    female = population[idx]
+def labour_event(population: Dict[bytes, Person], events: EventsHandler, female_idx: bytes, male_idx: bytes):
+    female = population[female_idx]
     if not isinstance(female, Female):
         raise Exception("Cannot get a male to labour you sick bastard!")
 
@@ -401,7 +427,7 @@ def labour_event(population: Dict[bytes, Person], events: EventsHandler, idx: by
                 Event(
                     die_event,
                     events.current_time + ultimate_demise,
-                    10,
+                    0,
                     population,
                     events,
                     child.id,
@@ -425,7 +451,7 @@ def labour_event(population: Dict[bytes, Person], events: EventsHandler, idx: by
 
     people_produced = people_produced + new_kids
 
-    if female.has_partner:
+    if female.has_partner and female.get_partner.id == male_idx:
         events.add(
             Event(
                 get_pregnant_event,
@@ -433,7 +459,8 @@ def labour_event(population: Dict[bytes, Person], events: EventsHandler, idx: by
                 5,
                 population,
                 events,
-                female.id,
+                female_idx,
+                male_idx
             )
         )
     return f"{female} brought to life {new_kids} kids"
@@ -444,6 +471,7 @@ def break_up_event(population: Dict[str, Person], events: EventsHandler, idx: st
     person = population[idx]
     if not person.has_partner:
         return ""
+
     u = random()
     if u < 0.2:
         partner = person.get_partner
@@ -451,7 +479,7 @@ def break_up_event(population: Dict[str, Person], events: EventsHandler, idx: st
         partner_time_alone: int = events.current_time + generate_time_alone(partner)
         person.break_up(person_time_alone)
         partner.break_up(partner_time_alone)
-
+         
         events.add(
             Event(
                 wants_partner_event,
@@ -495,7 +523,7 @@ def break_the_ice(population: Dict[bytes, Person], events: EventsHandler):
     filtered_popultation = [
         key
         for key in population
-        if population[key].age >= 12
+        if population[key].age >= 12*12
         and not population[key].wants_partner
         and not population[key].has_partner
     ]
