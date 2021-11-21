@@ -1,9 +1,10 @@
-from event_handlers import Event, EventsHandler
+from event_handlers import EventsHandler
 from events import (
     break_the_ice,
     generate_initial_popultaion,
-    SIMULATION_END,
 )
+from config import SIMULATION_END
+
 from main import run_simul
 
 

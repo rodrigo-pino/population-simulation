@@ -4,15 +4,16 @@ from typing import Callable, Dict
 
 from person import Female, Male, Person
 from event_handlers import Event, EventsHandler
+from config import *
 
-SIMULATION_END = 100 * 12
-AGE_RANK = [i * 12 for i in [12, 15, 21, 35, 45, 60, 125, 200]]
-PREGNANT_RANGE = (1, 6)
-PREGNANT_REST_RANGE = (3, 12)
-PARTNER_RANGE = (1, 3)
-WANT_PARTNER_RANGE = (1, 12)
-BREAK_UP_RANGE = (6, 18)
 global people_produced
+global total_wants_partner
+global total_partners
+global total_pregnancies
+global total_labours
+global total_widowing
+global total_breakups
+global total_deaths
 
 
 def valid_event(event: Callable[..., str]) -> Callable[..., str]:
@@ -113,13 +114,30 @@ def time_of_death(person: Person):
 
 
 def generate_initial_popultaion(m: int, f: int, events: EventsHandler):
+    print("Setting up global vars")
+
     global people_produced
+    global total_labours
+    global total_widowing
+    global total_partners
+    global total_pregnancies
+    global total_wants_partner
+    global total_breakups
+    global total_deaths
+
     people_produced = m + f
-    print("Generating inital population ...")
+    total_labours = 0
+    total_widowing = 0
+    total_partners = 0
+    total_pregnancies = 0
+    total_wants_partner = 0
+    total_breakups = 0
+    total_deaths = 0
+
+    print(f"Generating inital population {m} males, {f} females...")
 
     population: Dict[bytes, Person] = dict()
-    count: int = 0
-    for _ in range(m + f):
+    for count in range(m + f):
         p = (
             Male("Male", int_uniform(0, 100) * 12, generate_max_kids(), id=count)
             if count < m
@@ -127,7 +145,6 @@ def generate_initial_popultaion(m: int, f: int, events: EventsHandler):
                 "Female", int_uniform(0, 100) * 12, generate_max_kids(), id=count
             )
         )
-        count += 1
         population[p.id] = p
         ultimate_demise = time_of_death(p)
         if ultimate_demise < SIMULATION_END:
@@ -164,11 +181,17 @@ def generate_initial_popultaion(m: int, f: int, events: EventsHandler):
 def die_event(
     population: Dict[str, Person], events: EventsHandler, idx: str, ultimate_demise: int
 ):
+    global total_deaths
+    total_deaths += 1
+    
     person = population[idx]
     person.increase_age(ultimate_demise)
     del population[idx]
 
     if person.has_partner:
+        global total_widowing
+        total_widowing += 1
+
         partner = person.get_partner
         partner_time_alone: int = events.current_time + generate_time_alone(partner)
         partner.break_up(partner_time_alone)
@@ -257,6 +280,9 @@ def wants_partner_event(population: Dict[str, Person], events: EventsHandler, id
         or (45 <= age < 60 and u < 0.5)
         or (60 <= age < 125 and u < 0.2)
     ):
+        global total_wants_partner
+        total_wants_partner += 1
+
         person.set_wants_partner()
         events.add(
             Event(
@@ -310,6 +336,9 @@ def partner_event(population: Dict[bytes, Person], events: EventsHandler, idx: b
             or (15 < diff <= 20 and u < 0.25)
             or (20 < diff <= 100 and u < 0.15)
         ):
+            global total_partners
+            total_partners += 1
+
             person.set_partner(partner)
             partner.set_partner(person)
             female = person if person.is_female else partner
@@ -385,6 +414,9 @@ def get_pregnant_event(
         or (45 <= age < 60 and u < 0.2)
         or (60 <= age < 125 and u < 0.05)
     ):
+        global total_pregnancies
+        total_pregnancies += 1
+
         female.set_pregnant(generate_baby_amount())
         events.add(
             Event(labour_event, events.current_time + 9, 0, population, events, female_idx, male_idx)
@@ -410,6 +442,8 @@ def labour_event(population: Dict[bytes, Person], events: EventsHandler, female_
     female = population[female_idx]
     if not isinstance(female, Female):
         raise Exception("Cannot get a male to labour you sick bastard!")
+    global total_labours
+    total_labours += 1
 
     global people_produced
     new_kids = female.labour()
@@ -474,6 +508,9 @@ def break_up_event(population: Dict[str, Person], events: EventsHandler, idx: st
 
     u = random()
     if u < 0.2:
+        global total_breakups
+        total_breakups += 1
+
         partner = person.get_partner
         person_time_alone: int = events.current_time + generate_time_alone(person)
         partner_time_alone: int = events.current_time + generate_time_alone(partner)
