@@ -1,12 +1,4 @@
 [[package]]
-name = "random-name-generator"
-version = "1.0.7"
-description = "Random Names Generator"
-category = "main"
-optional = false
-python-versions = "~=3.6"
-
-[[package]]
 name = "sortedcontainers"
 version = "2.4.0"
 description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
@@ -17,13 +9,9 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "3ac3883be476db45e36a5c5384dc250446801309c4b8dcee7b92618d81312db1"
+content-hash = "231bd2d3c06f5933ae2d7f62356efe32002dc237dcc6e72c68f9accd8c54d6e4"
 
 [metadata.files]
-random-name-generator = [
-    {file = "random_name_generator-1.0.7-py3-none-any.whl", hash = "sha256:8b30af6bed6e1377a6ce976cd305bfba9ca38286298167ecf06bf350470fae4c"},
-    {file = "random_name_generator-1.0.7.tar.gz", hash = "sha256:26e4c658892043575ef47e2e4fda01d6cc2d15a43cd74ad3e75d6e2e6b589e0a"},
-]
 sortedcontainers = [
     {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
     {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
